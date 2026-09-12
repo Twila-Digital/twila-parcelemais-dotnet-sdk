@@ -63,7 +63,8 @@ public class ParceleMaisWebhookEventTests
         const string secret = "minha-chave-secreta-de-teste";
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var signature = ParceleMaisWebhookEvent.ComputeSignature(secret, timestamp, SamplePayload);
-        var tamperedSignature = signature[..^1] + (signature[^1] == '0' ? '1' : '0');
+        var lastChar = signature[signature.Length - 1];
+        var tamperedSignature = signature.Substring(0, signature.Length - 1) + (lastChar == '0' ? '1' : '0');
         var header = $"t={timestamp},v1={tamperedSignature}";
 
         Assert.Throws<ParceleMaisWebhookSignatureException>(() => ParceleMaisWebhookEvent.Parse(SamplePayload, header, secret));
