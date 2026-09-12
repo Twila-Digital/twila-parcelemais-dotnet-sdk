@@ -157,7 +157,7 @@ Verifica a assinatura HMAC-SHA256 do cabeçalho e a janela de replay (5 minutos)
 
 ## Documentação completa
 
-[docs.parcelemais.com.br](https://docs.parcelemais.com.br) — referência de todos os endpoints, autenticação, webhooks e mais.
+[documentacao.parcelemais.com.br](https://documentacao.parcelemais.com.br) — referência de todos os endpoints, autenticação, webhooks e mais.
 
 ## Contribuindo
 
