@@ -127,9 +127,11 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 
 **Objetivo:** valida a experiência real de consumo nos 3 perfis de cliente que o assessment define como obrigatórios (§7).
 
-**Arquivos:** `samples/ParceleMais.Sample.Console` (net8.0), `samples/ParceleMais.Sample.AspNetCore` (net8.0, minimal API + `AddParceleMais` via DI), `samples/ParceleMais.Sample.NetFramework` (net472, console, sem DI — construção direta do client).
+**Arquivos:** `samples/ParceleMais.Sample.Console` (net8.0), `samples/ParceleMais.Sample.AspNetCore` (net8.0, minimal API + `AddParceleMais` via DI), `samples/ParceleMais.Sample.NetFramework` (net472, sem hosting web — `ServiceCollection` standalone do próprio `Microsoft.Extensions.DependencyInjection`, como em uma app WinForms/serviço Windows real).
 
-**Critério de aceite:** os 3 samples compilam e rodam contra staging com credenciais reais de teste; o sample .NET Framework é o que valida (ou refuta) o risco de binding redirect do assessment §7/§27 — se houver problema, é descoberto aqui, antes do release, não depois de um consumidor real reportar.
+**Critério de aceite — binding redirect (resolvido):** os 3 samples compilam nos respectivos TFMs; o sample `net472`, rodado sem credenciais reais, atinge a validação de variáveis de ambiente sem nenhum erro de assembly/binding redirect; rodado com credenciais de teste (inválidas), a pilha inteira (DI, `IHttpClientFactory`, Polly.Core, `System.Text.Json`) executa e chega a uma resposta HTTP real do servidor — confirma que `netstandard2.0` funciona em .NET Framework sem fricção de binding redirect (risco do assessment §7/§27 descartado).
+
+**Achado não resolvido (fora do escopo de binding redirect):** com credenciais de teste inválidas, a chamada de geração de token (`POST /v1/authentication/accesstoken`) retorna `416 Requested Range Not Satisfiable` do `awselb/2.0` (AWS ALB) em vez do `400 Bad Request` real da aplicação — reproduzido igualmente em `net8.0` e `net472`, então não é um problema de TFM. Isolado até aqui: só ocorre quando o `HttpClient` nomeado `"parcelemais.auth"` é resolvido via `IHttpClientFactory` **dentro do mesmo `IServiceCollection`** que também registra `AddParceleMais` (reproduz mesmo sem nunca usar o client `"api"`); um `AddHttpClient<TClient,TImpl>(name, ...)` genérico equivalente, fora do contexto real de `AddParceleMais`, não reproduz. Requer mais investigação (candidato: alguma interação entre `AddOptions<ParceleMaisOptions>()`/`ValidateDataAnnotations()`/`ValidateOnStart` e o `IHttpClientFactory`, ou um handler HTTP/2 sendo negociado só nesse cenário) antes do release 1.0 — rastreado como risco aberto abaixo.
 
 ---
 
@@ -155,6 +157,7 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 | Binding redirect / fricção em .NET Framework real | Fase 5 | Sample `net472` real, não só compilação do pacote em `netstandard2.0`. |
 | Geração de modelos a partir do OpenAPI pode vazar nomes internos do backend | Fase 3 (mapeamento) | Nenhum tipo de `Internal.Generated` sai da fachada — reforçado por teste de arquitetura (`ArchUnitNET`/teste de reflexão simples verificando que nenhum tipo público do assembly pertence ao namespace `Internal`). |
 | PRs backend#1444/#1445/docs#22 ainda não mergeadas | Fase 2–4 (implementação já assume o novo contrato; testes de integração real ficam bloqueados até o merge) | Testes unitários (handler fake) não dependem do merge; só o teste de integração manual contra staging real depende. |
+| `416 Requested Range Not Satisfiable` do ALB em vez do erro real da API, só quando o `HttpClient` do `AddParceleMais` é resolvido via `IHttpClientFactory` | **Aberto** — antes do release 1.0 | Reproduzido em `net8.0` e `net472` (não é TFM-specific); isolado ao registro de `ITokenApiClient`/`AddHttpClient<TClient,TImpl>` dentro do contexto real de `AddParceleMais`, não em um equivalente genérico isolado. Precisa de bisseção linha a linha do `ServiceCollectionExtensions.AddParceleMais` para achar a causa exata. |
 
 ## Próximo passo
 
