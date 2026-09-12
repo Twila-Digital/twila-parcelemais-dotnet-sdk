@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using ParceleMais.Errors;
 using ParceleMais.Http;
 using ParceleMais.Internal.Generated;
@@ -73,25 +72,6 @@ internal sealed class OrdersClient(HttpClient httpClient) : IOrdersClient
             wire.Pagina.Numero,
             wire.Pagina.Tamanho,
             wire.Pagina.Total);
-    }
-
-    public async IAsyncEnumerable<Order> ListAllAsync(ListOrdersRequest? request = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        request ??= new ListOrdersRequest();
-        var page = request.Page;
-
-        while (true)
-        {
-            var result = await ListAsync(request with { Page = page }, cancellationToken).ConfigureAwait(false);
-
-            foreach (var item in result.Items)
-                yield return item;
-
-            if (!result.HasNext)
-                yield break;
-
-            page++;
-        }
     }
 
     public async Task<CheckoutLink> StartCdcSaleAsync(Guid orderId, CancellationToken cancellationToken = default)

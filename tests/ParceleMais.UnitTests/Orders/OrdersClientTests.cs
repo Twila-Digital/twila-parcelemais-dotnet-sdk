@@ -131,31 +131,6 @@ public class OrdersClientTests
     }
 
     [Fact]
-    public async Task ListAllAsync_PercorreTodasAsPaginasAutomaticamente()
-    {
-        var inner = new FakeHttpMessageHandler((request, _, _) =>
-        {
-            var page = request.RequestUri!.Query.Contains("pagina=2") ? 2 : 1;
-
-            var json = page == 1
-                ? """{ "items": [{"id":"11111111-1111-1111-1111-111111111111","numero":1,"status":{"valor":1,"descricao":"Analysing"},"documentoCliente":"1","razaoSocialEstabelecimento":"A","documentoEstabelecimento":"1","criadoEm":"2025-01-01T00:00:00-03:00"}], "pagina": { "tem_proximo": true, "tem_anterior": false, "numero": 1, "tamanho": 1, "total": 2 } }"""
-                : """{ "items": [{"id":"22222222-2222-2222-2222-222222222222","numero":2,"status":{"valor":1,"descricao":"Analysing"},"documentoCliente":"1","razaoSocialEstabelecimento":"A","documentoEstabelecimento":"1","criadoEm":"2025-01-01T00:00:00-03:00"}], "pagina": { "tem_proximo": false, "tem_anterior": true, "numero": 2, "tamanho": 1, "total": 2 } }""";
-
-            return Task.FromResult(JsonResponse(json));
-        });
-
-        var client = CreateClient(inner);
-
-        var orders = new List<Order>();
-        await foreach (var order in client.ListAllAsync(new ListOrdersRequest(PageSize: 1)))
-            orders.Add(order);
-
-        Assert.Equal(2, orders.Count);
-        Assert.Equal(1, orders[0].Number);
-        Assert.Equal(2, orders[1].Number);
-    }
-
-    [Fact]
     public async Task StartCdcSaleAsync_RetornaOLinkDeCheckout()
     {
         var inner = new FakeHttpMessageHandler((_, _, _) => Task.FromResult(JsonResponse(

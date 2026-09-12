@@ -10,8 +10,6 @@ public interface IOrdersClient
 
     Task<PagedResult<Order>> ListAsync(ListOrdersRequest? request = null, CancellationToken cancellationToken = default);
 
-    IAsyncEnumerable<Order> ListAllAsync(ListOrdersRequest? request = null, CancellationToken cancellationToken = default);
-
     Task<CheckoutLink> StartCdcSaleAsync(Guid orderId, CancellationToken cancellationToken = default);
 
     Task ImportInvoiceAsync(Guid orderId, InvoiceFile file, CancellationToken cancellationToken = default);
