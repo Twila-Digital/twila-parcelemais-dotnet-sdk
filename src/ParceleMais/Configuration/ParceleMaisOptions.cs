@@ -35,5 +35,12 @@ public sealed class ParceleMaisOptions
     /// </summary>
     public ParceleMaisResilienceOptions Resilience { get; set; } = new();
 
-    internal Uri ResolveBaseUrl() => BaseUrl ?? Environment.ToBaseUri();
+    internal Uri ResolveBaseUrl()
+    {
+        var uri = BaseUrl ?? Environment.ToBaseUri();
+
+        // Sem "/" final, HttpClient.BaseAddress + caminho relativo substitui o último
+        // segmento do path (RFC 3986 §5.3) em vez de concatenar.
+        return uri.AbsoluteUri.EndsWith('/') ? uri : new Uri(uri.AbsoluteUri + "/", UriKind.Absolute);
+    }
 }
