@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/ParceleMais.Sample.AspNetCore/ParceleMais.Sample.AspNetCore.csproj" />
+    <Project Path="samples/ParceleMais.Sample.Console/ParceleMais.Sample.Console.csproj" />
+    <Project Path="samples/ParceleMais.Sample.NetFramework/ParceleMais.Sample.NetFramework.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ParceleMais/ParceleMais.csproj" />
   </Folder>
