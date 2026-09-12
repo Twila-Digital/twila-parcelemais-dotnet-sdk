@@ -1,0 +1,23 @@
+name: Contract tests
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore tests/ParceleMais.ContractTests
+
+      - name: Contract tests contra o OpenAPI de staging
+        run: dotnet test tests/ParceleMais.ContractTests -c Release
