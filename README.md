@@ -5,6 +5,9 @@
 <p align="center">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Twila-Digital/twila-parcelemais-dotnet-sdk"></a>
   <a href="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/actions/workflows/quality.yml"><img alt="Quality" src="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/actions/workflows/quality.yml/badge.svg"></a>
+  <a href="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/security/code-scanning"><img alt="Security" src="https://github.com/Twila-Digital/twila-parcelemais-dotnet-sdk/actions/workflows/security.yml/badge.svg"></a>
+  <a href="https://codecov.io/gh/Twila-Digital/twila-parcelemais-dotnet-sdk"><img alt="Coverage" src="https://codecov.io/gh/Twila-Digital/twila-parcelemais-dotnet-sdk/branch/production/graph/badge.svg"></a>
   <img alt="Target Frameworks" src="https://img.shields.io/badge/.NET-netstandard2.0%20%7C%20net8.0-512BD4">
 </p>
 
@@ -154,6 +157,14 @@ Verifica a assinatura HMAC-SHA256 do cabeçalho e a janela de replay (5 minutos)
 - `samples/ParceleMais.Sample.Console` — .NET 8, DI standalone
 - `samples/ParceleMais.Sample.AspNetCore` — .NET 8, minimal API
 - `samples/ParceleMais.Sample.NetFramework` — net472, `ServiceCollection` standalone
+
+## Qualidade, segurança e cobertura
+
+- **Build** (`ci.yml`) — compila os dois TFMs em `ubuntu-latest` e `windows-latest`.
+- **Test** (`ci.yml`) — testes unitários em `net8.0` (ambos os OS) e `net472` (`windows-latest`, único onde .NET Framework roda de verdade).
+- **Quality** (`quality.yml`) — análise estática via Codacy CLI, resultados publicados na aba **Security → Code scanning** do repositório.
+- **Security** (`security.yml`) — [CodeQL](https://codeql.github.com/) para C#, rodando a cada PR/push e semanalmente.
+- **Coverage** — cobertura de testes coletada via `coverlet.collector` e publicada no [Codecov](https://codecov.io/gh/Twila-Digital/twila-parcelemais-dotnet-sdk).
 
 ## Documentação completa
 
