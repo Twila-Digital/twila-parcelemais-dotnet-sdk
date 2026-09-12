@@ -4,11 +4,13 @@ using Microsoft.Extensions.Options;
 using Polly;
 using ParceleMais.Authentication;
 using ParceleMais.Configuration;
+using ParceleMais.Customers;
 using ParceleMais.Http;
 using ParceleMais.Idempotency;
 using ParceleMais.Orders;
 using ParceleMais.Resilience;
 using ParceleMais.Simulations;
+using ParceleMais.Webhooks;
 
 namespace ParceleMais.DependencyInjection;
 
@@ -42,6 +44,8 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpClient<IOrdersClient, OrdersClient>(HttpClientNames.Api);
         services.AddHttpClient<ISimulationsClient, SimulationsClient>(HttpClientNames.Api);
+        services.AddHttpClient<ICustomersClient, CustomersClient>(HttpClientNames.Api);
+        services.AddHttpClient<IWebhooksClient, WebhooksClient>(HttpClientNames.Api);
         services.AddSingleton<IParceleMaisClient, ParceleMaisClient>();
 
         return apiClientBuilder;
