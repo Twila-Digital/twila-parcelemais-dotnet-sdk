@@ -114,7 +114,7 @@ public class OrdersClientTests
         {
             capturedUri = request.RequestUri;
             return Task.FromResult(JsonResponse("""
-                { "items": [], "pagina": { "tem_proximo": false, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 0 } }
+                { "itens": [], "pagina": { "tem_proximo": false, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 0 } }
                 """));
         });
 
