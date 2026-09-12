@@ -4,7 +4,15 @@ SDK .NET oficial para a API do [Parcele +](https://www.cartaosimples.com.br) —
 
 > Uso restrito a server-side. O `ClientSecret` nunca deve ser embarcado em um app mobile, SPA ou qualquer código que rode no dispositivo do usuário final.
 
-Compatível com `netstandard2.0` (.NET Framework 4.6.2+, .NET Core 2.0+) e `net8.0`.
+Publica dois target frameworks: `netstandard2.0` e `net8.0` (build nativo).
+
+| Runtime | Versões aceitas |
+| --- | --- |
+| .NET / .NET Core | 2.0 até a versão mais recente (5, 6, 7, 8, 9, 10) |
+| .NET Framework | 4.6.2 ou superior |
+| Xamarin / Mono / UWP | Qualquer versão compatível com .NET Standard 2.0 |
+
+> .NET Core 1.0/1.1 **não são suportados** — só implementam .NET Standard 1.6.
 
 ## Instalação
 
