@@ -92,13 +92,16 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 **Objetivo:** cobre o caminho crítico de venda (o que justifica a existência do SDK). Primeira fase com valor de negócio real — candidata a **1.0.0-alpha**.
 
 **Arquivos/classes:**
-- `Internal/Generated/` — modelos gerados a partir do `openapi.yaml` (staging, já com `servers:` produção — ver §0) só para os paths de Order/Simulation. Ferramenta: avaliar `Microsoft.OpenApi`+geração própria vs. `NSwag`/`Kiota` só como *ferramenta de build* (não dependência do pacote publicado) — decisão tomada no início desta fase, documentada em `docs/dev/model-generation.md` do próprio repo (não no SDK publicado).
-- `Internal/Mapping/OrderMapper.cs`, `SimulationMapper.cs` — traduz `Generated` → modelos públicos (`Order`, `OrderStatus` enum, `InstallmentSimulation`, `ValuesSimulation`).
+- `Internal/Generated/` — decisão tomada: modelos escritos manualmente (records `internal sealed` com `JsonPropertyName`), espelhando exatamente o `openapi.yaml` real (produção — servidor já presente desde §0), em vez de montar um pipeline de geração (NSwag/Kiota) só para ~10 schemas. Reavaliar geração automática se o número de schemas crescer o bastante para justificar o custo de manter a ferramenta de build.
+- `Internal/Mapping/OrderMapper.cs`, `SimulationMapper.cs` — traduz `Generated` → modelos públicos (`Order`, `OrderStatus` enum, `InstallmentSimulation`, `ValuesSimulation`). `Serialization/EnumMapping.cs` reaproveita o mesmo fallback `[UnknownValue]` do conversor JSON (assessment §17) para os enums mapeados manualmente aqui (`OrderStatus`, `CalculationValueType`), não só para os que passam por `System.Text.Json` diretamente.
 - `Orders/IOrdersClient.cs`/`OrdersClient.cs`, `Orders/Models/*` (`CreateOrderRequest`, `Order`, `OrderStatus`, `Address`, `InvoiceFile`, `CheckoutLink`).
 - `Simulations/ISimulationsClient.cs`/`SimulationsClient.cs`, `Simulations/Models/*`.
-- `InvoiceFile` — construtores a partir de `Stream`, `byte[]`, `FileInfo`; converte para base64 internamente (nunca expõe a string base64 na API pública).
+- `InvoiceFile` — construtores a partir de `Stream` (sync/async), `byte[]`, caminho de arquivo; converte para base64 internamente (nunca expõe a string base64 na API pública).
+- `IParceleMaisClient`/`ParceleMaisClient.cs` (adiados da Fase 2) criados agora, já com `Orders`/`Simulations` reais — `Customers`/`Webhooks` entram como propriedades na Fase 4.
 
-**Testes:** contrato de request/response real (fixtures capturadas do `example:` do OpenAPI), `OrderStatus` desconhecido (ex.: um 20º valor simulado) não quebra, `CreateAsync` envia `Idempotency-Key` (verificado via handler de teste inspecionando o header), `ImportInvoiceAsync` aceita os 3 construtores de `InvoiceFile` e produz o mesmo base64 nos 3 casos.
+**Desvio do plano original:** `IOrdersClient.CreateAsync` retorna `Guid` (o id do pedido), não `Order` completo. `POST /v1/order` só devolve `{ pedidoId }` — fazer um `GET` adicional escondido dentro de `CreateAsync` para montar um `Order` completo esconderia uma segunda chamada de rede e criaria uma falha "fantasma" pós-criação bem-sucedida (a criação funcionou, mas o SDK lançaria por causa do `GET` de confirmação). Mais correto e honesto o consumidor decidir se quer buscar o pedido via `GetAsync(id)` depois.
+
+**Testes:** contrato de request/response real (fixtures capturadas do `example:` do OpenAPI), `OrderStatus` desconhecido (ex.: um 99º valor simulado) não quebra, `CreateAsync` envia `Idempotency-Key` (verificado via handler de teste inspecionando o header), `ImportInvoiceAsync` aceita os 3 construtores de `InvoiceFile` e produz o mesmo base64 nos 3 casos, `ListAllAsync` percorre páginas automaticamente, `SimulateValuesAsync` sempre envia `modeloJuros=1` (único valor disponível hoje).
 
 **Critério de aceite:** um console de teste manual (ainda não o sample oficial da Fase 6) consegue: gerar token → simular parcelas → criar pedido → consultar o pedido criado, contra staging real.
 
