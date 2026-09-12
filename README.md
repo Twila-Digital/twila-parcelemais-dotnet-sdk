@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo-light.svg" alt="Parcele+" width="180" style="max-width: 100%;">
+  <img src="https://raw.githubusercontent.com/Twila-Digital/twila-parcelemais-dotnet-sdk/production/assets/logo-light.svg" alt="Parcele+" width="180" style="max-width: 100%;">
 </p>
 
 <p align="center">
