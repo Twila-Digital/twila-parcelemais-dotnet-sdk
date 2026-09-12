@@ -33,10 +33,11 @@ Fase 1: Scaffold + Configuration + Serialization + Errors
 Fase 2: Http + Authentication + Resilience
 Fase 3: Orders + Simulations (o caminho crítico de venda)
 Fase 4: Customers + Webhooks (CRUD + assinatura + parse)
-Fase 5: Paginação/auto-paginação (transversal — aplicada em Orders/Customers já na Fase 3/4, testada isoladamente aqui)
-Fase 6: Samples (.NET 8 console, ASP.NET Core, .NET Framework 4.7.2)
-Fase 7: Contract tests + empacotamento NuGet + CI
+Fase 5: Samples (.NET 8 console, ASP.NET Core, .NET Framework 4.7.2)
+Fase 6: Contract tests + empacotamento NuGet + CI
 ```
+
+**Sem auto-paginação (`IAsyncEnumerable<T>`):** decisão revertida depois de implementada na Fase 3 — o consumidor sempre pagina explicitamente via `ListAsync`/`PagedResult<T>.HasNext`. Motivo: uma lista "sem fim visível" (`await foreach`) esconde quantas chamadas HTTP reais estão sendo feitas por trás — o consumidor perde o controle explícito sobre quantas páginas está buscando. `IOrdersClient` (e `ICustomersClient` na Fase 4) expõem **apenas** `ListAsync(request) : Task<PagedResult<T>>`.
 
 Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), mas **tudo depende delas** — por isso vêm primeiro e são pequenas o bastante para revisar rápido.
 
@@ -60,7 +61,7 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 
 **Testes:** `ParceleMaisOptionsValidatorTests` (options inválidas lançam `ParceleMaisConfigurationException` com a mensagem certa, nunca com o secret no texto), `UnknownEnumJsonConverterTests` (valor desconhecido → `Unknown`, não exceção), `ProblemDetailsModelTests` (desserializa os 3 formatos reais observados no assessment §4: erro de negócio com `erros`, erro de payload sem `erros`, e um payload com campo totalmente novo não mapeado).
 
-**Riscos:** `netstandard2.0` + `System.Text.Json` puxa dependência de pacote extra (`System.Text.Json` standalone) — validar que não conflita com uma versão já referenciada pelo host em .NET Framework (mitigado testando no sample da Fase 6, mas um smoke build em `net472` já nesta fase, mesmo sem sample completo, evita descobrir tarde).
+**Riscos:** `netstandard2.0` + `System.Text.Json` puxa dependência de pacote extra (`System.Text.Json` standalone) — validar que não conflita com uma versão já referenciada pelo host em .NET Framework (mitigado testando no sample da Fase 5, mas um smoke build em `net472` já nesta fase, mesmo sem sample completo, evita descobrir tarde).
 
 **Critério de aceite:** `dotnet build` limpo nos dois TFMs; cobertura de teste das classes acima ≥ 90%; nenhuma classe de `Internal`/`Generated` (ainda não existe, mas o padrão de namespace já é reservado) referenciada por teste externo.
 
@@ -92,15 +93,18 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 **Objetivo:** cobre o caminho crítico de venda (o que justifica a existência do SDK). Primeira fase com valor de negócio real — candidata a **1.0.0-alpha**.
 
 **Arquivos/classes:**
-- `Internal/Generated/` — modelos gerados a partir do `openapi.yaml` (staging, já com `servers:` produção — ver §0) só para os paths de Order/Simulation. Ferramenta: avaliar `Microsoft.OpenApi`+geração própria vs. `NSwag`/`Kiota` só como *ferramenta de build* (não dependência do pacote publicado) — decisão tomada no início desta fase, documentada em `docs/dev/model-generation.md` do próprio repo (não no SDK publicado).
-- `Internal/Mapping/OrderMapper.cs`, `SimulationMapper.cs` — traduz `Generated` → modelos públicos (`Order`, `OrderStatus` enum, `InstallmentSimulation`, `ValuesSimulation`).
+- `Internal/Generated/` — decisão tomada: modelos escritos manualmente (records `internal sealed` com `JsonPropertyName`), espelhando exatamente o `openapi.yaml` real (produção — servidor já presente desde §0), em vez de montar um pipeline de geração (NSwag/Kiota) só para ~10 schemas. Reavaliar geração automática se o número de schemas crescer o bastante para justificar o custo de manter a ferramenta de build.
+- `Internal/Mapping/OrderMapper.cs`, `SimulationMapper.cs` — traduz `Generated` → modelos públicos (`Order`, `OrderStatus` enum, `InstallmentSimulation`, `ValuesSimulation`). `Serialization/EnumMapping.cs` reaproveita o mesmo fallback `[UnknownValue]` do conversor JSON (assessment §17) para os enums mapeados manualmente aqui (`OrderStatus`, `CalculationValueType`), não só para os que passam por `System.Text.Json` diretamente.
 - `Orders/IOrdersClient.cs`/`OrdersClient.cs`, `Orders/Models/*` (`CreateOrderRequest`, `Order`, `OrderStatus`, `Address`, `InvoiceFile`, `CheckoutLink`).
 - `Simulations/ISimulationsClient.cs`/`SimulationsClient.cs`, `Simulations/Models/*`.
-- `InvoiceFile` — construtores a partir de `Stream`, `byte[]`, `FileInfo`; converte para base64 internamente (nunca expõe a string base64 na API pública).
+- `InvoiceFile` — construtores a partir de `Stream` (sync/async), `byte[]`, caminho de arquivo; converte para base64 internamente (nunca expõe a string base64 na API pública).
+- `IParceleMaisClient`/`ParceleMaisClient.cs` (adiados da Fase 2) criados agora, já com `Orders`/`Simulations` reais — `Customers`/`Webhooks` entram como propriedades na Fase 4.
 
-**Testes:** contrato de request/response real (fixtures capturadas do `example:` do OpenAPI), `OrderStatus` desconhecido (ex.: um 20º valor simulado) não quebra, `CreateAsync` envia `Idempotency-Key` (verificado via handler de teste inspecionando o header), `ImportInvoiceAsync` aceita os 3 construtores de `InvoiceFile` e produz o mesmo base64 nos 3 casos.
+**Desvio do plano original:** `IOrdersClient.CreateAsync` retorna `Guid` (o id do pedido), não `Order` completo. `POST /v1/order` só devolve `{ pedidoId }` — fazer um `GET` adicional escondido dentro de `CreateAsync` para montar um `Order` completo esconderia uma segunda chamada de rede e criaria uma falha "fantasma" pós-criação bem-sucedida (a criação funcionou, mas o SDK lançaria por causa do `GET` de confirmação). Mais correto e honesto o consumidor decidir se quer buscar o pedido via `GetAsync(id)` depois.
 
-**Critério de aceite:** um console de teste manual (ainda não o sample oficial da Fase 6) consegue: gerar token → simular parcelas → criar pedido → consultar o pedido criado, contra staging real.
+**Testes:** contrato de request/response real (fixtures capturadas do `example:` do OpenAPI), `OrderStatus` desconhecido (ex.: um 99º valor simulado) não quebra, `CreateAsync` envia `Idempotency-Key` (verificado via handler de teste inspecionando o header), `ImportInvoiceAsync` aceita os 3 construtores de `InvoiceFile` e produz o mesmo base64 nos 3 casos, `ListAsync` monta a query string dos filtros corretamente, `SimulateValuesAsync` sempre envia `modeloJuros=1` (único valor disponível hoje).
+
+**Critério de aceite:** um console de teste manual (ainda não o sample oficial da Fase 5) consegue: gerar token → simular parcelas → criar pedido → consultar o pedido criado, contra staging real.
 
 ---
 
@@ -109,29 +113,17 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 **Objetivo:** completa a superfície pública do OpenAPI. Candidata a **1.0.0-beta**.
 
 **Arquivos/classes:**
-- `Customers/ICustomersClient.cs`/`CustomersClient.cs`, `Customers/Models/*`.
-- `Webhooks/IWebhooksClient.cs`/`WebhooksClient.cs` — CRUD via API, `CreateAsync` retorna `CreateWebhookResult` (novo tipo — não existia no assessment porque a API não devolvia nada relevante; agora carrega `SigningSecret`, exibido uma única vez, refletindo o `chaveAssinatura` do backend#1445).
+- `Customers/ICustomersClient.cs`/`CustomersClient.cs`, `Customers/Models/*` — só `ListAsync(request) : Task<PagedResult<Customer>>` (sem `ListAllAsync`/`IAsyncEnumerable` — ver decisão registrada logo após o diagrama de fases).
+- `Webhooks/IWebhooksClient.cs`/`WebhooksClient.cs` — CRUD via API, `CreateAsync` retorna `CreateWebhookResult` (novo tipo — não existia no assessment porque a API não devolvia nada relevante; agora carrega `SigningSecret`, exibido uma única vez, refletindo o `chaveAssinatura` do backend#1445). `ListAsync() : Task<IReadOnlyList<Webhook>>` — **sem paginação**: `GET /v1/webhooks` passou a devolver um array direto (backend#1449/docs#25), porque um parceiro tem no máximo 3 webhooks (um por tipo). Não existe `PagedResult<Webhook>` nem `ListAllAsync` aqui — seria paginar uma lista que nunca passa de 3 itens.
 - `Webhooks/ParceleMaisWebhookEvent.cs` — `Parse(rawJson)` (sem verificação, mantido para quem ainda não configurou segredo) **e** `Parse(rawJson, signatureHeader, signingSecret)` (novo — recalcula HMAC-SHA256 sobre `{timestamp}.{body}`, compara com `CryptographicOperations.FixedTimeEquals`, valida janela de tolerância de replay de 5 minutos, lança `ParceleMaisWebhookSignatureException` se inválido).
 
-**Testes:** paginação de clientes/webhooks, `WebhooksClient.CreateAsync` expõe o `SigningSecret` só na criação (não tenta buscá-lo de novo em nenhum outro método — nem existe onde buscar, a API também não devolve depois), `ParceleMaisWebhookEvent.Parse` com assinatura: válida, inválida (byte alterado), expirada (timestamp fora da janela), header ausente (fallback para parse sem verificação, com aviso via `ILogger`, nunca silencioso).
+**Testes:** paginação de clientes (`ICustomersClient.ListAsync`), `WebhooksClient.ListAsync` desserializa o array direto (sem wrapper), `WebhooksClient.CreateAsync` expõe o `SigningSecret` só na criação (não tenta buscá-lo de novo em nenhum outro método — nem existe onde buscar, a API também não devolve depois), `ParceleMaisWebhookEvent.Parse` com assinatura: válida, inválida (byte alterado), expirada (timestamp fora da janela), header ausente (fallback para parse sem verificação, com aviso via `ILogger`, nunca silencioso).
 
 **Critério de aceite:** um teste unitário reproduz exatamente o HMAC de um payload fixo com um segredo fixo e compara com um valor calculado independentemente (ex.: via um script Python de referência) — garante que a implementação do SDK é *byte-compatível* com a do backend, não só "parece certo".
 
 ---
 
-## Fase 5 — Paginação (endurecimento transversal)
-
-**Objetivo:** `ListAllAsync` (Orders e Customers) testado isoladamente, já que a Fase 3/4 só testa `ListAsync` página a página.
-
-**Arquivos/classes:** nenhum novo — só testes adicionais sobre o que já existe (`ListAllAsync` em `OrdersClient`/`CustomersClient`, implementado desde a Fase 3/4 conforme assessment §18).
-
-**Testes:** 3 páginas simuladas via handler fake → 1 `IAsyncEnumerable` com todos os itens na ordem certa; cancelamento no meio da segunda página para a enumeração sem buscar a terceira; página vazia não trava em loop.
-
-**Critério de aceite:** cobertura de `ListAllAsync` ≥ 95% (é pouco código, mas com várias bordas).
-
----
-
-## Fase 6 — Samples
+## Fase 5 — Samples
 
 **Objetivo:** valida a experiência real de consumo nos 3 perfis de cliente que o assessment define como obrigatórios (§7).
 
@@ -141,7 +133,7 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 
 ---
 
-## Fase 7 — Contract tests, empacotamento, CI
+## Fase 6 — Contract tests, empacotamento, CI
 
 **Objetivo:** release engineering. Sem código de produto novo.
 
@@ -149,7 +141,7 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 - `tests/ParceleMais.ContractTests` (assessment §23) — busca `openapi.yaml` de staging (agora com `servers:` completo) no pipeline, compara contra os modelos gerados na Fase 3/4.
 - Metadados de pacote completos (assessment §24): `PackageReadmeFile`, ícone, `PackageLicenseExpression`, SourceLink (`Deterministic`+`ContinuousIntegrationBuild`), `IncludeSymbols`+`snupkg`, `EnablePackageValidation` com baseline a partir de `1.0.0-alpha`.
 - CI (GitHub Actions): build+test nos dois TFMs a cada PR; contract tests em job agendado (diário) + obrigatório no pipeline de release; publish no NuGet.org só em tag `v*` após os dois anteriores passarem.
-- README (Developer Experience, conforme pedido no prompt original): quickstart em < 10 linhas, tabela de exceções, exemplo de auto-paginação, exemplo de verificação de webhook, nota de "server-side only".
+- README (Developer Experience, conforme pedido no prompt original): quickstart em < 10 linhas, tabela de exceções, exemplo de paginação (`ListAsync`/`PagedResult<T>.HasNext`), exemplo de verificação de webhook, nota de "server-side only".
 
 **Critério de aceite:** `dotnet pack` produz um `.nupkg` que passa `dotnet-validate package local` sem warnings; um projeto de teste separado (fora da solution) instala o pacote local via feed de arquivo e consome `IOrdersClient` com sucesso — prova que o pacote empacotado (não só o projeto em build) funciona.
 
@@ -160,7 +152,7 @@ Fases 1–2 não têm valor de negócio sozinhas (não expõem nenhum recurso), 
 | Risco | Fase que resolve | Como |
 |---|---|---|
 | `Microsoft.Extensions.Http.Resilience` pode não suportar `netstandard2.0` | Fase 2 (início) | Spike de 30 min antes de escrever `ResiliencePipelineFactory`; fallback documentado (§8 do assessment) já decidido, só falta confirmar se é necessário. |
-| Binding redirect / fricção em .NET Framework real | Fase 6 | Sample `net472` real, não só compilação do pacote em `netstandard2.0`. |
+| Binding redirect / fricção em .NET Framework real | Fase 5 | Sample `net472` real, não só compilação do pacote em `netstandard2.0`. |
 | Geração de modelos a partir do OpenAPI pode vazar nomes internos do backend | Fase 3 (mapeamento) | Nenhum tipo de `Internal.Generated` sai da fachada — reforçado por teste de arquitetura (`ArchUnitNET`/teste de reflexão simples verificando que nenhum tipo público do assembly pertence ao namespace `Internal`). |
 | PRs backend#1444/#1445/docs#22 ainda não mergeadas | Fase 2–4 (implementação já assume o novo contrato; testes de integração real ficam bloqueados até o merge) | Testes unitários (handler fake) não dependem do merge; só o teste de integração manual contra staging real depende. |
 

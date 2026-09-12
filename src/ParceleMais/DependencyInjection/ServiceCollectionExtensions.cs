@@ -6,7 +6,9 @@ using ParceleMais.Authentication;
 using ParceleMais.Configuration;
 using ParceleMais.Http;
 using ParceleMais.Idempotency;
+using ParceleMais.Orders;
 using ParceleMais.Resilience;
+using ParceleMais.Simulations;
 
 namespace ParceleMais.DependencyInjection;
 
@@ -30,12 +32,18 @@ public static class ServiceCollectionExtensions
             client.BaseAddress = sp.GetRequiredService<ParceleMaisOptions>().ResolveBaseUrl();
         });
 
-        return services.AddHttpClient(HttpClientNames.Api, (sp, client) =>
+        var apiClientBuilder = services.AddHttpClient(HttpClientNames.Api, (sp, client) =>
             {
                 client.BaseAddress = sp.GetRequiredService<ParceleMaisOptions>().ResolveBaseUrl();
             })
             .AddHttpMessageHandler<IdempotencyKeyDelegatingHandler>()
             .AddHttpMessageHandler<ResilienceDelegatingHandler>()
             .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
+
+        services.AddHttpClient<IOrdersClient, OrdersClient>(HttpClientNames.Api);
+        services.AddHttpClient<ISimulationsClient, SimulationsClient>(HttpClientNames.Api);
+        services.AddSingleton<IParceleMaisClient, ParceleMaisClient>();
+
+        return apiClientBuilder;
     }
 }
