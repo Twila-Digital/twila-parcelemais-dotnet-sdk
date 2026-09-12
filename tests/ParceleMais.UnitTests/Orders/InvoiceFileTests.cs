@@ -37,12 +37,12 @@ public class InvoiceFileTests
     }
 
     [Fact]
-    public async Task FromFile_ProduzOMesmoBase64QueFromBytes()
+    public void FromFile_ProduzOMesmoBase64QueFromBytes()
     {
         var path = Path.GetTempFileName();
         try
         {
-            await File.WriteAllBytesAsync(path, SampleBytes);
+            File.WriteAllBytes(path, SampleBytes);
 
             var file = InvoiceFile.FromFile(path);
 

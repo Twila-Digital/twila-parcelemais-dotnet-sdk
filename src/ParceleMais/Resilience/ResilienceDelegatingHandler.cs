@@ -15,14 +15,16 @@ internal sealed class ResilienceDelegatingHandler(ResiliencePipeline<HttpRespons
 
         try
         {
-            return await pipeline.ExecuteAsync(
+            var executeTask = pipeline.ExecuteAsync(
                 static async (ctx, state) =>
                 {
                     var attempt = await state.Request.CloneAsync().ConfigureAwait(false);
                     return await state.Handler.SendAsyncCore(attempt, ctx.CancellationToken).ConfigureAwait(false);
                 },
                 context,
-                (Handler: this, Request: request)).ConfigureAwait(false);
+                (Handler: this, Request: request)).AsTask();
+
+            return await WaitAsync(executeTask, cancellationToken).ConfigureAwait(false);
         }
         catch (TimeoutRejectedException ex)
         {
@@ -40,4 +42,22 @@ internal sealed class ResilienceDelegatingHandler(ResiliencePipeline<HttpRespons
 
     private Task<HttpResponseMessage> SendAsyncCore(HttpRequestMessage request, CancellationToken cancellationToken) =>
         base.SendAsync(request, cancellationToken);
+
+    private static async Task<T> WaitAsync<T>(Task<T> task, CancellationToken cancellationToken)
+    {
+        if (task.IsCompleted || !cancellationToken.CanBeCanceled)
+            return await task.ConfigureAwait(false);
+
+        var cancellationTcs = new TaskCompletionSource<object?>();
+
+        using (cancellationToken.Register(static state => ((TaskCompletionSource<object?>)state!).TrySetResult(null), cancellationTcs))
+        {
+            var completed = await Task.WhenAny(task, cancellationTcs.Task).ConfigureAwait(false);
+
+            if (completed == cancellationTcs.Task)
+                cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        return await task.ConfigureAwait(false);
+    }
 }

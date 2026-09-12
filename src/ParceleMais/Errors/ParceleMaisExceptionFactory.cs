@@ -22,6 +22,9 @@ internal static class ParceleMaisExceptionFactory
 
     private static async Task<ProblemDetailsModel> ReadProblemDetailsAsync(HttpResponseMessage response, CancellationToken cancellationToken)
     {
+        if (response.Content is null)
+            return ProblemDetailsModel.Empty();
+
         try
         {
             var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);

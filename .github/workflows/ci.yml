@@ -5,10 +5,15 @@ on:
     branches: [production]
   push:
     branches: [production]
+  workflow_call:
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -17,10 +22,31 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore ${{ matrix.os == 'windows-latest' && 'ParceleMais.slnx' || 'src/ParceleMais/ParceleMais.csproj' }}
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build ${{ matrix.os == 'windows-latest' && 'ParceleMais.slnx' || 'src/ParceleMais/ParceleMais.csproj' }} --no-restore -c Release
 
-      - name: Unit tests
-        run: dotnet test tests/ParceleMais.UnitTests --no-build -c Release
+  test:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore tests/ParceleMais.UnitTests
+
+      - name: Unit tests (net8.0)
+        run: dotnet test tests/ParceleMais.UnitTests --no-restore -c Release -f net8.0
+
+      - name: Unit tests (net472)
+        if: matrix.os == 'windows-latest'
+        run: dotnet test tests/ParceleMais.UnitTests --no-restore -c Release -f net472
