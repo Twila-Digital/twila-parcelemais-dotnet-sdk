@@ -47,10 +47,10 @@ dotnet add package ParceleMais --source ./artifacts
    - **Repository owner:** `Twila-Digital`
    - **Repository:** `twila-parcelemais-dotnet-sdk`
    - **Workflow file:** `release.yml` (só o nome do arquivo, sem o caminho `.github/workflows/`)
-   - **Environment:** `release`
-2. No repositório do GitHub, criar o [environment](https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment) `release` (Settings → Environments) e adicionar o secret `NUGET_USER` com o nome de usuário (perfil) do nuget.org — **não o e-mail**.
+   - **Environment:** `production`
+2. No repositório do GitHub, criar o [environment](https://docs.github.com/actions/deployment/targeting-different-environments/using-environments-for-deployment) `production` (Settings → Environments) e adicionar o secret `NUGET_USER` com o nome de usuário (perfil) do nuget.org — **não o e-mail**.
 
-Com isso configurado, `git push --tags` numa tag `v*` (ex.: `v1.0.0-alpha.1`) dispara build → contract tests → pack → publicação automaticamente.
+Com isso configurado, `git push --tags` numa tag `v*` (ex.: `v1.0.0`) dispara build → contract tests → pack → publicação automaticamente.
 
 ## Reportando problemas
 
