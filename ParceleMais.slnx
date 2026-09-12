@@ -9,5 +9,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ParceleMais.UnitTests/ParceleMais.UnitTests.csproj" />
+    <Project Path="tests/ParceleMais.ContractTests/ParceleMais.ContractTests.csproj" />
   </Folder>
 </Solution>
