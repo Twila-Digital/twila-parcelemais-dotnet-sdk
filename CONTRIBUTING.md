@@ -29,7 +29,7 @@ Ou empacote localmente e consuma via feed de arquivo:
 
 ```bash
 dotnet pack src/ParceleMais/ParceleMais.csproj -c Release -o ./artifacts
-dotnet add package ParceleMais --source ./artifacts
+dotnet add package Twila.ParceleMais --source ./artifacts
 ```
 
 ## Abrindo um PR

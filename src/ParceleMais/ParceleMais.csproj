@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
-    <PackageId>ParceleMais</PackageId>
+    <PackageId>Twila.ParceleMais</PackageId>
     <Description>SDK .NET oficial para integração com a API do Parcele+.</Description>
     <PackageTags>parcelemais;cdc;credito;payments</PackageTags>
     <RootNamespace>ParceleMais</RootNamespace>
