@@ -17,7 +17,7 @@ Os contract tests (`tests/ParceleMais.ContractTests`) fazem uma chamada real ao 
 
 ## Instalando a partir do código-fonte
 
-Enquanto o pacote não é publicado no NuGet.org, use um `ProjectReference` direto:
+Pra testar mudanças locais antes de um release, use um `ProjectReference` direto:
 
 ```xml
 <ItemGroup>

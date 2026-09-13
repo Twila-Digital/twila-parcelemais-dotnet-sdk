@@ -35,8 +35,6 @@ Publica dois target frameworks: `netstandard2.0` e `net8.0` (build nativo).
 dotnet add package Twila.ParceleMais
 ```
 
-> O pacote ainda não foi publicado no NuGet.org — veja [CONTRIBUTING.md](CONTRIBUTING.md) para instalar a partir do código-fonte enquanto isso.
-
 ## Quick start
 
 ```csharp
