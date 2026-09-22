@@ -1,6 +1,5 @@
 namespace ParceleMais.Establishments.Models;
 
-/// <param name="Document">CNPJ da loja, somente números.</param>
 public sealed record CreateEstablishmentRequest(
     string Document,
     string LegalName,
