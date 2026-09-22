@@ -10,6 +10,7 @@ using ParceleMais.Idempotency;
 using ParceleMais.Orders;
 using ParceleMais.Resilience;
 using ParceleMais.Simulations;
+using ParceleMais.Establishments;
 using ParceleMais.Webhooks;
 
 namespace ParceleMais.DependencyInjection;
@@ -45,6 +46,7 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<IOrdersClient, OrdersClient>(HttpClientNames.Api);
         services.AddHttpClient<ISimulationsClient, SimulationsClient>(HttpClientNames.Api);
         services.AddHttpClient<ICustomersClient, CustomersClient>(HttpClientNames.Api);
+        services.AddHttpClient<IEstablishmentsClient, EstablishmentsClient>(HttpClientNames.Api);
         services.AddHttpClient<IWebhooksClient, WebhooksClient>(HttpClientNames.Api);
         services.AddSingleton<IParceleMaisClient, ParceleMaisClient>();
 
