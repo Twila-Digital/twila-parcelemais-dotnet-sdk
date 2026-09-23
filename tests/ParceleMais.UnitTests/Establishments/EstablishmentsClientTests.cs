@@ -52,10 +52,10 @@ public class EstablishmentsClientTests
         string? capturedBody = null;
         Uri? capturedUri = null;
 
-        var inner = new FakeHttpMessageHandler(async (request, _, cancellationToken) =>
+        var inner = new FakeHttpMessageHandler(async (request, _, _) =>
         {
             capturedUri = request.RequestUri;
-            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
             return JsonResponse("""{ "estabelecimentoId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d" }""");
         });
@@ -175,11 +175,11 @@ public class EstablishmentsClientTests
         HttpMethod? capturedMethod = null;
         Uri? capturedUri = null;
 
-        var inner = new FakeHttpMessageHandler(async (request, _, cancellationToken) =>
+        var inner = new FakeHttpMessageHandler(async (request, _, _) =>
         {
             capturedMethod = request.Method;
             capturedUri = request.RequestUri;
-            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
             return EmptyResponse();
         });
@@ -201,10 +201,10 @@ public class EstablishmentsClientTests
         string? capturedBody = null;
         Uri? capturedUri = null;
 
-        var inner = new FakeHttpMessageHandler(async (request, _, cancellationToken) =>
+        var inner = new FakeHttpMessageHandler(async (request, _, _) =>
         {
             capturedUri = request.RequestUri;
-            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
             return EmptyResponse();
         });
@@ -227,10 +227,10 @@ public class EstablishmentsClientTests
         string? capturedBody = null;
         Uri? capturedUri = null;
 
-        var inner = new FakeHttpMessageHandler(async (request, _, cancellationToken) =>
+        var inner = new FakeHttpMessageHandler(async (request, _, _) =>
         {
             capturedUri = request.RequestUri;
-            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
             return EmptyResponse();
         });
@@ -249,9 +249,9 @@ public class EstablishmentsClientTests
     {
         string? capturedBody = null;
 
-        var inner = new FakeHttpMessageHandler(async (request, _, cancellationToken) =>
+        var inner = new FakeHttpMessageHandler(async (request, _, _) =>
         {
-            capturedBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            capturedBody = await request.Content!.ReadAsStringAsync();
 
             return EmptyResponse();
         });
