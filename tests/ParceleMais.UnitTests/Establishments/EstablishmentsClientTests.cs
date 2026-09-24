@@ -72,6 +72,12 @@ public class EstablishmentsClientTests
         Assert.Contains("5511999998888", capturedBody);
         Assert.Contains("\"contaBancaria\"", capturedBody);
         Assert.Contains("\"endereco\"", capturedBody);
+        Assert.DoesNotContain("\"endereco\":null", capturedBody);
+        Assert.Contains("\"rua\":\"Rua Exemplo\"", capturedBody);
+        Assert.Contains("\"numero\":\"100\"", capturedBody);
+        Assert.Contains("\"bairro\":\"Centro\"", capturedBody);
+        Assert.Contains("\"estado\":\"SP\"", capturedBody);
+        Assert.Contains("\"cep\":\"01310100\"", capturedBody);
     }
 
     [Fact]

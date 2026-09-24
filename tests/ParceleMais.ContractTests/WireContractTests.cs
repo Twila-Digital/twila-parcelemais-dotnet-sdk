@@ -31,10 +31,12 @@ public sealed class WireContractTests(OpenApiSchemaFixture fixture)
         yield return new object[] { typeof(CreateWebHookResponseWire), "WebIntegration.Endpoints.WebHook.Responses.CreateWebHookResponse" };
         yield return new object[] { typeof(CreateWebHookRequestWire), "WebIntegration.Endpoints.WebHook.Requests.CreateWebHookContent" };
         yield return new object[] { typeof(UpdateWebHookRequestWire), "WebIntegration.Endpoints.WebHook.Requests.UpdateWebHookContent" };
+        yield return new object[] { typeof(AuditWebHookWire), "Integration.Shared.Responses.WebHook.AuditWebHookIntegrationResponse" };
 
         yield return new object[] { typeof(PaginaWire), "Integration.Shared.Responses.PaginationIntegrationResponse" };
         yield return new object[] { typeof(PagedResultWire<>), "Integration.Shared.Responses.PagedIntegrationResponse`1[Integration.Shared.Responses.Order.OrderIntegrationResponse]" };
         yield return new object[] { typeof(PagedResultWire<>), "Integration.Shared.Responses.PagedIntegrationResponse`1[Integration.Shared.Responses.Customer.CustomerIntegrationResponse]" };
+        yield return new object[] { typeof(PagedResultWire<>), "Integration.Shared.Responses.PagedIntegrationResponse`1[Integration.Shared.Responses.WebHook.AuditWebHookIntegrationResponse]" };
 
         yield return new object[] { typeof(SimulateInstallmentWire), "Integration.Shared.Responses.Order.ListSimulateInstallmentsSimplifiedIntegrationResponse" };
         yield return new object[] { typeof(EstablishmentSimulationValuesWire), "Integration.Shared.Responses.Order.EstablishmentSimulationValuesIntegrationResponse" };

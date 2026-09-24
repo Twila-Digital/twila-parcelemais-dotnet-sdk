@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using ParceleMais.Errors;
+using ParceleMais.Http;
+using ParceleMais.Internal.Generated;
 using ParceleMais.Internal.Generated.WebHook;
 using ParceleMais.Internal.Mapping;
 using ParceleMais.Serialization;
@@ -37,6 +39,37 @@ internal sealed class WebhooksClient(HttpClient httpClient) : IWebhooksClient
             .ConfigureAwait(false);
 
         return wire!.Select(WebHookMapper.ToPublic).ToList();
+    }
+
+    public async Task<PagedResult<WebhookAudit>> ListAuditAsync(ListWebhookAuditRequest? request = null, CancellationToken cancellationToken = default)
+    {
+        request ??= new ListWebhookAuditRequest();
+
+        var path = new QueryStringBuilder()
+            .Add("dataInicio", request.StartDate)
+            .Add("dataFim", request.EndDate)
+            .Add("pedidoId", request.OrderId)
+            .Add("numeroPedido", request.OrderNumber)
+            .Add("statusCode", request.StatusCode)
+            .Add("pagina", request.Page)
+            .Add("tamanhoPagina", request.PageSize)
+            .Build("v1/webhooks/auditoria");
+
+        using var response = await httpClient.GetAsync(path, cancellationToken).ConfigureAwait(false);
+
+        await EnsureSuccessAsync(response, cancellationToken).ConfigureAwait(false);
+
+        var wire = await response.Content
+            .ReadFromJsonAsync<PagedResultWire<AuditWebHookWire>>(ParceleMaisJsonOptions.Default, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new PagedResult<WebhookAudit>(
+            wire!.Items.Select(WebHookMapper.ToPublic).ToList(),
+            wire.Pagina.TemProximo,
+            wire.Pagina.TemAnterior,
+            wire.Pagina.Numero,
+            wire.Pagina.Tamanho,
+            wire.Pagina.Total);
     }
 
     public async Task UpdateAsync(WebHookType type, UpdateWebhookRequest request, CancellationToken cancellationToken = default)

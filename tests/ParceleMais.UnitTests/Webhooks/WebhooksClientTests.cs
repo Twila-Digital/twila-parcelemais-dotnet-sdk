@@ -102,4 +102,119 @@ public class WebhooksClientTests
         Assert.Equal(HttpMethod.Delete, capturedRequest!.Method);
         Assert.EndsWith("v1/webhooks/1", capturedRequest.RequestUri!.AbsolutePath);
     }
+
+    [Fact]
+    public async Task ListAuditAsync_MontaAQueryStringComOsFiltrosInformados()
+    {
+        Uri? capturedUri = null;
+        var inner = new FakeHttpMessageHandler((request, _, _) =>
+        {
+            capturedUri = request.RequestUri;
+            return Task.FromResult(JsonResponse("""
+                { "itens": [], "pagina": { "tem_proximo": false, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 0 } }
+                """));
+        });
+
+        var client = CreateClient(inner);
+        var orderId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+
+        await client.ListAuditAsync(new ListWebhookAuditRequest(
+            StartDate: new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.FromHours(-3)),
+            OrderId: orderId,
+            OrderNumber: 1001,
+            StatusCode: 500,
+            Page: 2,
+            PageSize: 20));
+
+        Assert.NotNull(capturedUri);
+        Assert.EndsWith("v1/webhooks/auditoria", capturedUri!.AbsolutePath);
+        var query = Uri.UnescapeDataString(capturedUri.Query);
+        Assert.Contains("dataInicio=2025-01-01T00:00:00.0000000-03:00", query);
+        Assert.Contains($"pedidoId={orderId}", query);
+        Assert.Contains("numeroPedido=1001", query);
+        Assert.Contains("statusCode=500", query);
+        Assert.Contains("pagina=2", query);
+        Assert.Contains("tamanhoPagina=20", query);
+        Assert.DoesNotContain("dataFim", query);
+    }
+
+    [Fact]
+    public async Task ListAuditAsync_OffsetPositivo_CodificaOMaisNaQueryString()
+    {
+        Uri? capturedUri = null;
+        var inner = new FakeHttpMessageHandler((request, _, _) =>
+        {
+            capturedUri = request.RequestUri;
+            return Task.FromResult(JsonResponse("""
+                { "itens": [], "pagina": { "tem_proximo": false, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 0 } }
+                """));
+        });
+
+        var client = CreateClient(inner);
+
+        await client.ListAuditAsync(new ListWebhookAuditRequest(
+            EndDate: new DateTimeOffset(2025, 12, 31, 23, 59, 59, TimeSpan.FromHours(2))));
+
+        var rawQuery = capturedUri!.Query;
+        Assert.Contains("dataFim=2025-12-31T23%3A59%3A59.0000000%2B02%3A00", rawQuery);
+        Assert.DoesNotContain("+", rawQuery);
+    }
+
+    [Fact]
+    public async Task ListAuditAsync_SemRequest_EnviaSoOsPadroesDePaginacao()
+    {
+        Uri? capturedUri = null;
+        var inner = new FakeHttpMessageHandler((request, _, _) =>
+        {
+            capturedUri = request.RequestUri;
+            return Task.FromResult(JsonResponse("""
+                { "itens": [], "pagina": { "tem_proximo": false, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 0 } }
+                """));
+        });
+
+        var client = CreateClient(inner);
+
+        await client.ListAuditAsync();
+
+        Assert.Equal("?pagina=1&tamanhoPagina=10", capturedUri!.Query);
+    }
+
+    [Fact]
+    public async Task ListAuditAsync_MapeiaOsItensEAPaginacao()
+    {
+        const string json = """
+            {
+                "itens": [
+                    {
+                        "id": "0b8f2c1e-4d3a-4f5b-9c6d-7e8f9a0b1c2d",
+                        "tipo": 3,
+                        "requisicao": "{\"pedidoId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}",
+                        "resposta": "Internal Server Error",
+                        "statusCode": 500,
+                        "dataCriacao": "2025-06-10T14:30:00-03:00"
+                    }
+                ],
+                "pagina": { "tem_proximo": true, "tem_anterior": false, "numero": 1, "tamanho": 10, "total": 25 }
+            }
+            """;
+
+        var inner = new FakeHttpMessageHandler((_, _, _) => Task.FromResult(JsonResponse(json)));
+        var client = CreateClient(inner);
+
+        var page = await client.ListAuditAsync();
+
+        var audit = Assert.Single(page.Items);
+        Assert.Equal(Guid.Parse("0b8f2c1e-4d3a-4f5b-9c6d-7e8f9a0b1c2d"), audit.Id);
+        Assert.Equal(WebHookType.Order, audit.Type);
+        Assert.Equal("""{"pedidoId":"3fa85f64-5717-4562-b3fc-2c963f66afa6"}""", audit.Request);
+        Assert.Equal("Internal Server Error", audit.Response);
+        Assert.Equal(500, audit.StatusCode);
+        Assert.Equal(new DateTimeOffset(2025, 6, 10, 14, 30, 0, TimeSpan.FromHours(-3)), audit.CreatedAt);
+
+        Assert.True(page.HasNext);
+        Assert.False(page.HasPrevious);
+        Assert.Equal(1, page.PageNumber);
+        Assert.Equal(10, page.PageSize);
+        Assert.Equal(25, page.TotalCount);
+    }
 }

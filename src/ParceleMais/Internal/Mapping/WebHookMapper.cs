@@ -11,6 +11,14 @@ internal static class WebHookMapper
         wire.Url,
         EnumMapping.FromWireValue<WebHookAuthenticationType>(wire.TipoAutenticacao));
 
+    public static WebhookAudit ToPublic(AuditWebHookWire wire) => new(
+        wire.Id,
+        EnumMapping.FromWireValue<WebHookType>(wire.Tipo),
+        wire.Requisicao,
+        wire.Resposta,
+        wire.StatusCode,
+        wire.DataCriacao);
+
     public static CreateWebHookRequestWire ToWire(CreateWebhookRequest request) => new(
         (int)request.Type,
         request.Url,

@@ -27,6 +27,9 @@ internal sealed class QueryStringBuilder
     public QueryStringBuilder Add(string name, DateTimeOffset? value) =>
         Add(name, value?.ToString("o", CultureInfo.InvariantCulture));
 
+    public QueryStringBuilder Add(string name, Guid? value) =>
+        Add(name, value?.ToString());
+
     public string Build(string path)
     {
         if (_parameters.Count == 0)

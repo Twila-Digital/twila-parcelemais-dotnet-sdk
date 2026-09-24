@@ -103,11 +103,11 @@ var pedidoId = await client.Orders.CreateAsync(new CreateOrderRequest(
 | `client.Orders` | `CreateAsync`, `GetAsync`, `ListAsync`, `StartCdcSaleAsync`, `ImportInvoiceAsync` |
 | `client.Simulations` | `SimulateInstallmentsAsync`, `SimulateValuesAsync` |
 | `client.Customers` | `GetAsync`, `ListAsync` |
-| `client.Webhooks` | `CreateAsync`, `ListAsync`, `UpdateAsync`, `DeleteAsync` |
+| `client.Webhooks` | `CreateAsync`, `ListAsync`, `ListAuditAsync`, `UpdateAsync`, `DeleteAsync` |
 
 ## Paginação
 
-`Orders.ListAsync` e `Customers.ListAsync` retornam `PagedResult<T>` — sem auto-paginação; você controla explicitamente o avanço de página:
+`Orders.ListAsync`, `Customers.ListAsync` e `Webhooks.ListAuditAsync` retornam `PagedResult<T>` — sem auto-paginação; você controla explicitamente o avanço de página:
 
 ```csharp
 var page = await client.Orders.ListAsync(new ListOrdersRequest(Page: 1, PageSize: 20));

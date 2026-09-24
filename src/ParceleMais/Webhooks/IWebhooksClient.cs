@@ -8,6 +8,8 @@ public interface IWebhooksClient
 
     Task<IReadOnlyList<Webhook>> ListAsync(CancellationToken cancellationToken = default);
 
+    Task<PagedResult<WebhookAudit>> ListAuditAsync(ListWebhookAuditRequest? request = null, CancellationToken cancellationToken = default);
+
     Task UpdateAsync(WebHookType type, UpdateWebhookRequest request, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(WebHookType type, CancellationToken cancellationToken = default);
