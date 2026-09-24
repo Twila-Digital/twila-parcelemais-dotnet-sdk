@@ -103,6 +103,7 @@ var pedidoId = await client.Orders.CreateAsync(new CreateOrderRequest(
 | `client.Orders` | `CreateAsync`, `GetAsync`, `ListAsync`, `StartCdcSaleAsync`, `ImportInvoiceAsync` |
 | `client.Simulations` | `SimulateInstallmentsAsync`, `SimulateValuesAsync` |
 | `client.Customers` | `GetAsync`, `ListAsync` |
+| `client.Establishments` | `CreateAsync`, `GetAsync`, `ListAsync`, `UpdateAsync`, `UpdateBankAccountAsync`, `ActivateAsync`, `DeactivateAsync` |
 | `client.Webhooks` | `CreateAsync`, `ListAsync`, `ListAuditAsync`, `UpdateAsync`, `DeleteAsync` |
 
 ## Paginação
