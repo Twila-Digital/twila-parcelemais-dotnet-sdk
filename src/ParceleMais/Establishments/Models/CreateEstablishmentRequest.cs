@@ -7,4 +7,4 @@ public sealed record CreateEstablishmentRequest(
     DisbursementModel DisbursementModel,
     EstablishmentOwner Owner,
     EstablishmentBankAccount BankAccount,
-    EstablishmentAddress? Address = null);
+    EstablishmentAddress Address);

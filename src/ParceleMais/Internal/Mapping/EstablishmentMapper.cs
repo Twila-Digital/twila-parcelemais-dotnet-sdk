@@ -13,7 +13,7 @@ internal static class EstablishmentMapper
         (int)request.DisbursementModel,
         ToWire(request.Owner),
         ToWire(request.BankAccount),
-        request.Address is null ? null : ToWire(request.Address));
+        ToWire(request.Address));
 
     public static UpdateEstablishmentRequestWire ToWire(UpdateEstablishmentRequest request) => new(
         request.TradeName,

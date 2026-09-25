@@ -9,4 +9,4 @@ internal sealed record CreateEstablishmentRequestWire(
     [property: JsonPropertyName("modeloDesembolso")] int ModeloDesembolso,
     [property: JsonPropertyName("responsavel")] EstablishmentOwnerWire Responsavel,
     [property: JsonPropertyName("contaBancaria")] EstablishmentBankAccountWire ContaBancaria,
-    [property: JsonPropertyName("endereco")] EstablishmentAddressWire? Endereco = null);
+    [property: JsonPropertyName("endereco")] EstablishmentAddressWire Endereco);
